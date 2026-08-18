@@ -1,30 +1,31 @@
-# Enhanced Omarchy Menu
+# Omarchy Refined Menu
 
 A sleek, refined UI/UX enhancement for the [Omarchy](https://github.com/omarchy/omarchy) Quickshell application launcher and command palette.
 
 ## ✨ Features
 
+- **App Priority Search:** Installed applications always rank at the top over installer scripts and system actions.
 - **Single-Line Layout:** Clean vertical alignment for item titles, preserving muscle memory and rapid scanning.
-- **Right-Aligned Category Badges (Pills):** Replaces stacked low-contrast subtitles with elegant, color-coded category pills (`Apps`, `Install`, `Setup`, `System`).
-- **Contextual Action Footer:** Instant feedback showing what pressing `Enter` will do for the currently highlighted item (`Launch App`, `Run Installer`, `Configure DNS`, `End Session`).
-- **Seamless & Isolated:** Installed as a user-level Omarchy plugin (`$USER.menu`), ensuring updates to Omarchy core won't break your customizations.
+- **Subtle Right-Aligned Categories:** Clean, monochrome category breadcrumbs (`Apps`, `Install › Development`, `Setup › Network › DNS`, `System`) aligned on the right.
+- **Contextual Action Footer:** Instant feedback showing what pressing `Enter` will do for the currently highlighted item (`Launch Google Chrome`, `Run installer for Go`, `Execute Logout`).
+- **Seamless & Safe:** Installed as an isolated user-level Omarchy plugin (`$USER.menu`), ensuring core Omarchy updates won't overwrite your setup.
 
 ## 🚀 Quick Install
 
 ### One-Line Install (GitHub)
 ```bash
-curl -sSL "https://raw.githubusercontent.com/Praveensenpai/omarchy-menu/main/install.sh" | bash
+curl -sSL "https://raw.githubusercontent.com/Praveensenpai/omarchy-refined-menu/main/install.sh" | bash
 ```
 
 ### Manual Install
 ```bash
-git clone https://github.com/Praveensenpai/omarchy-menu.git
-cd omarchy-menu
+git clone https://github.com/Praveensenpai/omarchy-refined-menu.git
+cd omarchy-refined-menu
 chmod +x install.sh
 ./install.sh
 ```
 
-## 🔄 Uninstall / Restore Default
+## 🔄 Uninstall / Restore Stock Menu
 ```bash
 chmod +x uninstall.sh
 ./uninstall.sh

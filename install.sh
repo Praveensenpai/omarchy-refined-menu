@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-echo -e "${PURPLE}🚀 Installing Enhanced Omarchy Menu...${NC}\n"
+echo -e "${PURPLE}🚀 Installing Omarchy Refined Menu...${NC}\n"
 
 if ! command -v omarchy >/dev/null 2>&1; then
     echo -e "${YELLOW}⚠️  Omarchy is not installed on this system. Exiting.${NC}"
