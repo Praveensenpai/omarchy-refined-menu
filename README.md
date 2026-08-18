@@ -7,6 +7,7 @@ A sleek, refined UI/UX enhancement for the [Omarchy](https://github.com/omarchy/
 ## ✨ Features
 
 - **App Priority Search:** Installed applications always rank at the top over installer scripts and system actions.
+- **Acronym & Fuzzy Subsequence Matching:** Instant search with initials and abbreviations (`gc` → Google Chrome, `vsc` → Visual Studio Code, `cf`/`cfg` → Config, `tb` → Thunderbird, `bt` → Bluetooth).
 - **Single-Line Layout:** Clean vertical alignment for item titles, preserving muscle memory and rapid scanning.
 - **Subtle Right-Aligned Categories:** Clean, monochrome category breadcrumbs (`Apps`, `Install › Development`, `Setup › Network › DNS`, `System`) aligned on the right.
 - **Contextual Action Footer:** Instant feedback showing what pressing `Enter` will do for the currently highlighted item (`Launch Google Chrome`, `Run installer for Go`, `Execute Logout`).
