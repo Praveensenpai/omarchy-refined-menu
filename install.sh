@@ -20,8 +20,15 @@ USER_PREFIX="$(id -un)"
 CONFIG_DIR="$HOME/.config/omarchy"
 PLUGINS_DIR="$CONFIG_DIR/plugins"
 TARGET_DIR="$PLUGINS_DIR/$USER_PREFIX.menu"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_PLUGIN_DIR="$SCRIPT_DIR/plugin"
+
+SCRIPT_DIR=""
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+SOURCE_PLUGIN_DIR=""
+if [ -n "$SCRIPT_DIR" ] && [ -d "$SCRIPT_DIR/plugin" ]; then
+    SOURCE_PLUGIN_DIR="$SCRIPT_DIR/plugin"
+fi
 
 # Ensure plugin directory exists
 mkdir -p "$PLUGINS_DIR"
@@ -36,7 +43,7 @@ fi
 
 # Locate plugin source files (supports local execution and curl | bash)
 TEMP_DIR=""
-if [ -d "$SOURCE_PLUGIN_DIR" ]; then
+if [ -n "$SOURCE_PLUGIN_DIR" ] && [ -d "$SOURCE_PLUGIN_DIR" ]; then
     PLUGIN_SRC="$SOURCE_PLUGIN_DIR"
 else
     echo -e "${BLUE}📥 Fetching omarchy-refined-menu repository...${NC}"
@@ -57,6 +64,11 @@ sed -i "s/\"id\": \"[^\"]*\"/\"id\": \"$USER_PREFIX.menu\"/" "$TARGET_DIR/manife
 # Validate the installed plugin
 if command -v omarchy >/dev/null 2>&1; then
     omarchy plugin validate "$TARGET_DIR"
+fi
+
+# Rescan plugins so Omarchy shell discovers the new plugin
+if command -v omarchy-shell >/dev/null 2>&1; then
+    omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
 fi
 
 # Enable the user plugin
