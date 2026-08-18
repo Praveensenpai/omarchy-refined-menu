@@ -285,6 +285,66 @@ function leafIdFor(id) {
   return parts.length > 0 ? parts[parts.length - 1] : id
 }
 
+function getWords(text) {
+  if (!text) return []
+  var clean = String(text)
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .trim()
+    .toLowerCase()
+  return clean ? clean.split(/\s+/) : []
+}
+
+function getInitials(text) {
+  var words = getWords(text)
+  var initials = ""
+  for (var i = 0; i < words.length; i++) {
+    if (words[i].length > 0) initials += words[i][0]
+  }
+  return initials
+}
+
+function matchesWordPrefixes(query, words) {
+  if (!query || !words || words.length === 0) return false
+  var q = String(query).toLowerCase()
+
+  function check(wIdx, qIdx, matchedAnyWord) {
+    if (qIdx === q.length) return matchedAnyWord
+    if (wIdx >= words.length) return false
+
+    var word = words[wIdx]
+    var maxLen = Math.min(word.length, q.length - qIdx)
+    for (var len = maxLen; len >= 1; len--) {
+      if (word.substring(0, len) === q.substring(qIdx, qIdx + len)) {
+        if (check(wIdx + 1, qIdx + len, true)) return true
+      }
+    }
+
+    if (check(wIdx + 1, qIdx, matchedAnyWord)) return true
+    return false
+  }
+
+  return check(0, 0, false)
+}
+
+function entryWordSources(entry) {
+  if (!entry) return []
+  var sources = [getWords(entry.label), getWords(leafIdFor(entry.id))]
+  var aliases = Array.isArray(entry.aliases) ? entry.aliases : []
+  for (var i = 0; i < aliases.length; i++) {
+    sources.push(getWords(aliases[i]))
+  }
+  return sources
+}
+
+function entryMatchesAnyWordPrefix(entry, term) {
+  var sources = entryWordSources(entry)
+  for (var s = 0; s < sources.length; s++) {
+    if (matchesWordPrefixes(term, sources[s])) return true
+  }
+  return false
+}
+
 function nameSearchText(entry) {
   if (!entry) return ""
   var aliases = []
@@ -318,9 +378,11 @@ function matchesQuery(entry, query, visible) {
   var terms = String(query || "").toLowerCase().trim().split(/\s+/)
 
   for (var i = 0; i < terms.length; i++) {
-    if (!terms[i]) continue
-    if (nameText.indexOf(terms[i]) >= 0) continue
-    if (termInSearchWords(terms[i], descriptionText)) continue
+    var term = terms[i]
+    if (!term) continue
+    if (nameText.indexOf(term) >= 0) continue
+    if (termInSearchWords(term, descriptionText)) continue
+    if (term.length >= 2 && entryMatchesAnyWordPrefix(entry, term)) continue
     return false
   }
 
@@ -335,17 +397,26 @@ function searchScore(items, entry, query) {
   var isApp = entry.kind === "app"
   var score = 80
 
+  var labelWords = getWords(entry.label)
+  var labelInitials = getInitials(entry.label)
+
   // 1. Exact match
   if (label === needle) score = isApp ? 0 : (entry.parent === "root" ? 12 : 20)
   // 2. Word match in app name (e.g. "zen" in "Zen Browser")
   else if (isApp && label.split(/\s+/).indexOf(needle) >= 0) score = 2
-  // 3. Prefix match
+  // 3. Exact acronym match on app name (e.g. "gc" for "Google Chrome")
+  else if (isApp && labelInitials === needle) score = 3
+  // 4. Prefix match
   else if (label.indexOf(needle) === 0) score = isApp ? 4 : 25
-  // 4. Substring in label
+  // 5. Word-prefix sequence match on label (e.g. "vs" for "Visual Studio Code", "gch" for "Google Chrome")
+  else if (needle.length >= 2 && matchesWordPrefixes(needle, labelWords)) score = isApp ? 6 : 28
+  // 6. Substring in label
   else if (label.indexOf(needle) >= 0) score = isApp ? 10 : 35
-  // 5. Substring in aliases / executable name
-  else if (nameText.indexOf(needle) >= 0) score = isApp ? 15 : 45
-  // 6. Match in description / keywords
+  // 7. Exact acronym match on non-app label
+  else if (!isApp && labelInitials === needle) score = 26
+  // 8. Substring or acronym in aliases / executable name
+  else if (nameText.indexOf(needle) >= 0 || (needle.length >= 2 && entryMatchesAnyWordPrefix(entry, needle))) score = isApp ? 15 : 45
+  // 9. Match in description / keywords
   else if (descriptionTextMatches(needle, descriptionText)) score = isApp ? 25 : 60
 
   var entryId = String(entry.id || "").toLowerCase()
@@ -507,6 +578,10 @@ if (typeof module !== "undefined") {
     searchableToken: searchableToken,
     leafIdFor: leafIdFor,
     nameSearchText: nameSearchText,
+    getWords: getWords,
+    getInitials: getInitials,
+    matchesWordPrefixes: matchesWordPrefixes,
+    entryMatchesAnyWordPrefix: entryMatchesAnyWordPrefix,
     termInSearchWords: termInSearchWords,
     descriptionTextMatches: descriptionTextMatches,
     matchesQuery: matchesQuery,
