@@ -26,6 +26,13 @@ chmod +x install.sh
 ```
 
 ## 🔄 Uninstall / Restore Stock Menu
+
+### One-Line Uninstall
+```bash
+curl -sSL "https://raw.githubusercontent.com/Praveensenpai/omarchy-refined-menu/main/uninstall.sh" | bash
+```
+
+### Manual Uninstall
 ```bash
 chmod +x uninstall.sh
 ./uninstall.sh

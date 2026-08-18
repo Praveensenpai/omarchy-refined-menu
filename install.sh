@@ -34,10 +34,22 @@ if [ -d "$TARGET_DIR" ]; then
     cp -r "$TARGET_DIR" "$BACKUP_DIR"
 fi
 
+# Locate plugin source files (supports local execution and curl | bash)
+TEMP_DIR=""
+if [ -d "$SOURCE_PLUGIN_DIR" ]; then
+    PLUGIN_SRC="$SOURCE_PLUGIN_DIR"
+else
+    echo -e "${BLUE}📥 Fetching omarchy-refined-menu repository...${NC}"
+    TEMP_DIR="$(mktemp -d)"
+    trap 'rm -rf "$TEMP_DIR"' EXIT INT TERM
+    git clone --depth 1 https://github.com/Praveensenpai/omarchy-refined-menu.git "$TEMP_DIR" >/dev/null 2>&1
+    PLUGIN_SRC="$TEMP_DIR/plugin"
+fi
+
 # Copy plugin files
 echo -e "${BLUE}📂 Deploying plugin to ${TARGET_DIR}...${NC}"
 mkdir -p "$TARGET_DIR"
-cp -r "$SOURCE_PLUGIN_DIR"/* "$TARGET_DIR/"
+cp -r "$PLUGIN_SRC"/* "$TARGET_DIR/"
 
 # Update manifest with user prefix
 sed -i "s/\"id\": \"[^\"]*\"/\"id\": \"$USER_PREFIX.menu\"/" "$TARGET_DIR/manifest.json"
