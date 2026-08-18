@@ -2,6 +2,8 @@
 
 A sleek, refined UI/UX enhancement for the [Omarchy](https://github.com/omarchy/omarchy) Quickshell application launcher and command palette.
 
+![Omarchy Refined Menu Demo](assets/demo.gif)
+
 ## ✨ Features
 
 - **App Priority Search:** Installed applications always rank at the top over installer scripts and system actions.
