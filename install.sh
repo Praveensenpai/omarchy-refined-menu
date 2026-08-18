@@ -28,7 +28,8 @@ mkdir -p "$PLUGINS_DIR"
 
 # Backup existing user plugin if present
 if [ -d "$TARGET_DIR" ]; then
-    BACKUP_DIR="${TARGET_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
+    BACKUP_DIR="$CONFIG_DIR/backups/${USER_PREFIX}.menu.backup.$(date +%Y%m%d_%H%M%S)"
+    mkdir -p "$CONFIG_DIR/backups"
     echo -e "${BLUE}📦 Backing up existing plugin to ${BACKUP_DIR}...${NC}"
     cp -r "$TARGET_DIR" "$BACKUP_DIR"
 fi
