@@ -332,21 +332,27 @@ function searchScore(items, entry, query) {
   var label = entry.label.toLowerCase()
   var nameText = nameSearchText(entry)
   var descriptionText = String(entry.description || "").toLowerCase()
+  var isApp = entry.kind === "app"
   var score = 80
 
-  if (label === needle) score = entry.parent === "root" ? 2 : 0
-  // An installed app whose name contains the query as a whole word ("zen"
-  // for Zen Browser) beats exact-labeled menu entries like Install > Zen.
-  else if (entry.kind === "app" && label.split(/\s+/).indexOf(needle) >= 0) score = 0
-  else if (label.indexOf(needle) === 0) score = 10
-  else if (label.indexOf(needle) >= 0) score = 30
-  else if (nameText.indexOf(needle) >= 0) score = 40
-  else if (descriptionTextMatches(needle, descriptionText)) score = 60
+  // 1. Exact match
+  if (label === needle) score = isApp ? 0 : (entry.parent === "root" ? 12 : 20)
+  // 2. Word match in app name (e.g. "zen" in "Zen Browser")
+  else if (isApp && label.split(/\s+/).indexOf(needle) >= 0) score = 2
+  // 3. Prefix match
+  else if (label.indexOf(needle) === 0) score = isApp ? 4 : 25
+  // 4. Substring in label
+  else if (label.indexOf(needle) >= 0) score = isApp ? 10 : 35
+  // 5. Substring in aliases / executable name
+  else if (nameText.indexOf(needle) >= 0) score = isApp ? 15 : 45
+  // 6. Match in description / keywords
+  else if (descriptionTextMatches(needle, descriptionText)) score = isApp ? 25 : 60
 
-  if (entry.kind === "menu" || entry.kind === "link") score -= 2
-  // App rows sort after all menu items, so they lose the tiebreak below to an
-  // equal match. Outrank those, but stay inside the tier so better ones win.
-  if (entry.kind === "app") score -= 5
+  var entryId = String(entry.id || "").toLowerCase()
+  if (!isApp) {
+    if (entryId.indexOf("install") >= 0) score += 15
+    if (entryId.indexOf("system") >= 0 || entry.id === "logout") score += 20
+  }
 
   return score * 1000 + depthFor(items, entry.id) * 25 + entry.order
 }
