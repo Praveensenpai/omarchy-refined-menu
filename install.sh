@@ -48,7 +48,7 @@ fi
 
 # Enable the user plugin
 echo -e "${BLUE}🔌 Enabling $USER_PREFIX.menu plugin...${NC}"
-omarchy plugin enable "$USER_PREFIX.menu" >/dev/null 2>&1 || true
+omarchy plugin enable "$USER_PREFIX.menu"
 
 echo -e "\n${GREEN}✔ Enhanced Omarchy Menu installed successfully!${NC}"
 echo -e "${CYAN}Press Super+Space or your menu shortcut to enjoy the enhanced UI.${NC}\n"
