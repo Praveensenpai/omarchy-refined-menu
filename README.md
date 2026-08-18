@@ -14,7 +14,7 @@ A sleek, refined UI/UX enhancement for the [Omarchy](https://github.com/omarchy/
 
 ### One-Line Install (GitHub)
 ```bash
-curl -sSL "https://raw.githubusercontent.com/Praveensenpai/omarchy-refined-menu/main/install.sh" | bash
+curl -sSL "https://raw.githubusercontent.com/Praveensenpai/omarchy-refined-menu/HEAD/install.sh" | bash
 ```
 
 ### Manual Install
@@ -29,7 +29,7 @@ chmod +x install.sh
 
 ### One-Line Uninstall
 ```bash
-curl -sSL "https://raw.githubusercontent.com/Praveensenpai/omarchy-refined-menu/main/uninstall.sh" | bash
+curl -sSL "https://raw.githubusercontent.com/Praveensenpai/omarchy-refined-menu/HEAD/uninstall.sh" | bash
 ```
 
 ### Manual Uninstall
