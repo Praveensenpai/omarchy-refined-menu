@@ -1276,11 +1276,25 @@ Item {
               }
 
               Text {
+                id: detailText
+                visible: (root.filterText.length > 0 || row.kind === "dmenu") && row.detail.length > 0
+                anchors.right: trailContainer.left
+                anchors.rightMargin: Style.space(8)
+                anchors.verticalCenter: parent.verticalCenter
+                text: row.detail
+                color: row.hasCursor ? root.selectedText : root.foreground
+                opacity: row.hasCursor ? 0.72 : 0.42
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.bodySmall
+                elide: Text.ElideRight
+              }
+
+              Text {
                 id: labelText
                 anchors.left: row.hasIcon ? (row.isApp ? appIconImage.right : iconText.right) : parent.left
                 anchors.leftMargin: row.hasIcon ? Style.space(8) : root.rowReservedBorderLeft + Style.space(12)
-                anchors.right: trailContainer.left
-                anchors.rightMargin: Style.space(8)
+                anchors.right: detailText.visible ? detailText.left : trailContainer.left
+                anchors.rightMargin: Style.space(10)
                 anchors.verticalCenter: parent.verticalCenter
                 text: row.label
                 color: row.hasCursor ? root.selectedText : root.foreground
@@ -1298,57 +1312,16 @@ Item {
                 height: parent.height
                 width: childrenRect.width
 
-                Row {
+                Text {
+                  id: menuArrow
+                  visible: row.kind === "menu" || row.kind === "link"
+                  text: "›"
+                  color: row.hasCursor ? root.selectedText : root.foreground
+                  opacity: 0.4
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.heading
+                  font.weight: Font.Normal
                   anchors.verticalCenter: parent.verticalCenter
-                  spacing: Style.space(6)
-
-                  Rectangle {
-                    id: categoryBadge
-                    visible: (root.filterText.length > 0 || row.kind === "dmenu") && row.detail.length > 0
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: Style.space(22)
-                    width: badgeText.implicitWidth + Style.space(14)
-                    radius: Style.space(11)
-
-                    readonly property string detailLower: row.detail.toLowerCase()
-                    readonly property color badgeColor: {
-                      if (detailLower.indexOf("install") >= 0 || detailLower.indexOf("development") >= 0)
-                        return "#10b981"
-                      if (detailLower.indexOf("system") >= 0 || detailLower.indexOf("power") >= 0 || row.label.toLowerCase() === "logout")
-                        return "#f43f5e"
-                      if (detailLower.indexOf("setup") >= 0 || detailLower.indexOf("network") >= 0 || detailLower.indexOf("dns") >= 0)
-                        return "#f59e0b"
-                      if (detailLower.indexOf("app") >= 0)
-                        return "#38bdf8"
-                      return root.foreground
-                    }
-
-                    color: Util.alpha(badgeColor, row.hasCursor ? 0.22 : 0.12)
-                    border.width: 1
-                    border.color: Util.alpha(badgeColor, row.hasCursor ? 0.45 : 0.22)
-
-                    Text {
-                      id: badgeText
-                      anchors.centerIn: parent
-                      text: row.detail
-                      color: row.hasCursor ? root.selectedText : categoryBadge.badgeColor
-                      font.family: root.fontFamily
-                      font.pixelSize: Style.font.caption
-                      font.weight: Font.Medium
-                    }
-                  }
-
-                  Text {
-                    id: menuArrow
-                    visible: row.kind === "menu" || row.kind === "link"
-                    text: "›"
-                    color: row.hasCursor ? root.selectedText : root.foreground
-                    opacity: 0.4
-                    font.family: root.fontFamily
-                    font.pixelSize: Style.font.heading
-                    font.weight: Font.Normal
-                    anchors.verticalCenter: parent.verticalCenter
-                  }
                 }
               }
 
@@ -1439,7 +1412,7 @@ Item {
         Rectangle {
           id: footerContainer
           width: parent.width
-          height: (displayModel.count > 0 && root.cursorActive) ? Style.space(26) : 0
+          height: (displayModel.count > 0 && root.cursorActive) ? Style.space(22) : 0
           visible: height > 0
           clip: true
           color: "transparent"
@@ -1449,42 +1422,21 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             height: Style.spacing.hairline
-            color: Util.alpha(root.foreground, 0.15)
+            color: Util.alpha(root.foreground, 0.12)
           }
 
-          Row {
-            anchors.fill: parent
-            anchors.topMargin: Style.space(3)
-            anchors.leftMargin: Style.space(6)
-            anchors.rightMargin: Style.space(6)
-            spacing: Style.space(6)
-
-            Rectangle {
-              height: Style.space(16)
-              width: Style.space(20)
-              radius: Style.space(3)
-              color: Util.alpha(root.foreground, 0.12)
-              anchors.verticalCenter: parent.verticalCenter
-
-              Text {
-                anchors.centerIn: parent
-                text: "↵"
-                color: root.foreground
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.weight: Font.Bold
-              }
-            }
-
-            Text {
-              anchors.verticalCenter: parent.verticalCenter
-              width: parent.width - Style.space(32)
-              text: root.selectedActionHint()
-              color: Util.alpha(root.foreground, 0.7)
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.caption
-              elide: Text.ElideRight
-            }
+          Text {
+            anchors.left: parent.left
+            anchors.leftMargin: Style.space(8)
+            anchors.right: parent.right
+            anchors.rightMargin: Style.space(8)
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.selectedActionHint()
+            color: root.foreground
+            opacity: 0.45
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+            elide: Text.ElideRight
           }
         }
       }
