@@ -26,4 +26,9 @@ if [ -d "$TARGET_DIR" ]; then
     rm -rf "$TARGET_DIR"
 fi
 
+if command -v omarchy >/dev/null 2>&1; then
+    echo -e "${BLUE}🔄 Restarting Omarchy Shell...${NC}"
+    omarchy restart shell >/dev/null 2>&1 || true
+fi
+
 echo -e "\n${GREEN}✔ Default Omarchy menu restored successfully.${NC}\n"

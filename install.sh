@@ -50,5 +50,11 @@ fi
 echo -e "${BLUE}🔌 Enabling $USER_PREFIX.menu plugin...${NC}"
 omarchy plugin enable "$USER_PREFIX.menu"
 
+# Restart Omarchy shell to reload QML and compiled JS modules
+if command -v omarchy >/dev/null 2>&1; then
+    echo -e "${BLUE}🔄 Restarting Omarchy Shell...${NC}"
+    omarchy restart shell >/dev/null 2>&1 || true
+fi
+
 echo -e "\n${GREEN}✔ Enhanced Omarchy Menu installed successfully!${NC}"
 echo -e "${CYAN}Press Super+Space or your menu shortcut to enjoy the enhanced UI.${NC}\n"
