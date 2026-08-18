@@ -345,6 +345,29 @@ function entryMatchesAnyWordPrefix(entry, term) {
   return false
 }
 
+function isFuzzySubsequence(needle, text) {
+  if (!needle || !text) return false
+  var n = String(needle).toLowerCase()
+  var t = String(text).toLowerCase()
+  if (n.length > t.length) return false
+  var nIdx = 0
+  for (var i = 0; i < t.length && nIdx < n.length; i++) {
+    if (t[i] === n[nIdx]) nIdx++
+  }
+  return nIdx === n.length
+}
+
+function entryMatchesFuzzy(entry, term) {
+  if (!term || term.length < 2) return false
+  if (isFuzzySubsequence(term, entry.label)) return true
+  if (isFuzzySubsequence(term, leafIdFor(entry.id))) return true
+  var aliases = Array.isArray(entry.aliases) ? entry.aliases : []
+  for (var i = 0; i < aliases.length; i++) {
+    if (isFuzzySubsequence(term, aliases[i])) return true
+  }
+  return false
+}
+
 function nameSearchText(entry) {
   if (!entry) return ""
   var aliases = []
@@ -383,6 +406,7 @@ function matchesQuery(entry, query, visible) {
     if (nameText.indexOf(term) >= 0) continue
     if (termInSearchWords(term, descriptionText)) continue
     if (term.length >= 2 && entryMatchesAnyWordPrefix(entry, term)) continue
+    if (term.length >= 2 && entryMatchesFuzzy(entry, term)) continue
     return false
   }
 
@@ -416,7 +440,9 @@ function searchScore(items, entry, query) {
   else if (!isApp && labelInitials === needle) score = 26
   // 8. Substring or acronym in aliases / executable name
   else if (nameText.indexOf(needle) >= 0 || (needle.length >= 2 && entryMatchesAnyWordPrefix(entry, needle))) score = isApp ? 15 : 45
-  // 9. Match in description / keywords
+  // 9. Fuzzy subsequence match in label or aliases (e.g. "cf" in "Config" / "Voxtype Configuration")
+  else if (needle.length >= 2 && entryMatchesFuzzy(entry, needle)) score = isApp ? 18 : 38
+  // 10. Match in description / keywords
   else if (descriptionTextMatches(needle, descriptionText)) score = isApp ? 25 : 60
 
   var entryId = String(entry.id || "").toLowerCase()
@@ -582,6 +608,8 @@ if (typeof module !== "undefined") {
     getInitials: getInitials,
     matchesWordPrefixes: matchesWordPrefixes,
     entryMatchesAnyWordPrefix: entryMatchesAnyWordPrefix,
+    isFuzzySubsequence: isFuzzySubsequence,
+    entryMatchesFuzzy: entryMatchesFuzzy,
     termInSearchWords: termInSearchWords,
     descriptionTextMatches: descriptionTextMatches,
     matchesQuery: matchesQuery,
