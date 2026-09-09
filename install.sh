@@ -41,6 +41,10 @@ if [ -d "$TARGET_DIR" ]; then
     cp -r "$TARGET_DIR" "$BACKUP_DIR"
 fi
 
+# Ensure no stray backup directories remain in plugins directory to avoid scanner collisions
+mkdir -p "$CONFIG_DIR/backups"
+find "$PLUGINS_DIR" -maxdepth 1 -type d -name "${USER_PREFIX}.menu.backup.*" -exec mv {} "$CONFIG_DIR/backups/" \; 2>/dev/null || true
+
 # Locate plugin source files (supports local execution and curl | bash)
 TEMP_DIR=""
 if [ -n "$SOURCE_PLUGIN_DIR" ] && [ -d "$SOURCE_PLUGIN_DIR" ]; then
