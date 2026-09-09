@@ -307,20 +307,31 @@ function getInitials(text) {
 function matchesWordPrefixes(query, words) {
   if (!query || !words || words.length === 0) return false
   var q = String(query).toLowerCase()
+  var memo = {}
 
   function check(wIdx, qIdx, matchedAnyWord) {
     if (qIdx === q.length) return matchedAnyWord
     if (wIdx >= words.length) return false
 
+    var key = wIdx + ":" + qIdx + ":" + (matchedAnyWord ? 1 : 0)
+    if (memo[key] !== undefined) return memo[key]
+
     var word = words[wIdx]
     var maxLen = Math.min(word.length, q.length - qIdx)
     for (var len = maxLen; len >= 1; len--) {
       if (word.substring(0, len) === q.substring(qIdx, qIdx + len)) {
-        if (check(wIdx + 1, qIdx + len, true)) return true
+        if (check(wIdx + 1, qIdx + len, true)) {
+          memo[key] = true
+          return true
+        }
       }
     }
 
-    if (check(wIdx + 1, qIdx, matchedAnyWord)) return true
+    if (check(wIdx + 1, qIdx, matchedAnyWord)) {
+      memo[key] = true
+      return true
+    }
+    memo[key] = false
     return false
   }
 

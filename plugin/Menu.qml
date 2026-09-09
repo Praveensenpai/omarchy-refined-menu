@@ -5,7 +5,7 @@ import QtQuick
 import qs.Commons
 import qs.Ui
 import "MenuModel.js" as MenuModel
-import "/usr/share/omarchy/shell/services/AppSearch.js" as AppSearch
+import "AppSearch.js" as AppSearch
 
 Item {
   id: root
@@ -137,7 +137,7 @@ Item {
   }
   function refreshFallbackHides() {
     fallbackHidesScan.running = false
-    fallbackHidesScan.command = ["bash", root.fallbackBase() + "/shell/services/hidden-entries.sh", root.fallbackDesktops()]
+    fallbackHidesScan.command = ["bash", "-c", "bash \"$0\"/shell/services/hidden-entries.sh \"$1\" || true", root.fallbackBase(), root.fallbackDesktops()]
     fallbackHidesScan.running = true
   }
 
