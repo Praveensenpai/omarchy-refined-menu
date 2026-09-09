@@ -5,6 +5,7 @@ import QtQuick
 import qs.Commons
 import qs.Ui
 import "MenuModel.js" as MenuModel
+import "/usr/share/omarchy/shell/services/AppSearch.js" as AppSearch
 
 Item {
   id: root
@@ -27,6 +28,7 @@ Item {
     if (payload.mode === "select" || payload.mode === "input") {
       root.openDmenu(payload)
     } else {
+      if (!root.appLibrary) root.refreshFallbackHides()
       root.openRoute(payload.initialMenu || payload.menu || "root")
     }
   }
@@ -78,6 +80,82 @@ Item {
   // Shared application engine (entries, hidden filters, icons, launch,
   // removal), owned by the shell and also used by the standalone launcher.
   readonly property var appLibrary: root.shell ? root.shell.appLibrary : null
+  property var fallbackHiddenIds: ({})
+  property string fallbackConfiguredHides: ""
+
+  function fallbackBase() {
+    var base = String(root.omarchyPath || "")
+    return base.length > 0 ? base : "/usr/share/omarchy"
+  }
+  function fallbackDesktops() {
+    return [Quickshell.env("XDG_CURRENT_DESKTOP"), Quickshell.env("XDG_SESSION_DESKTOP"), Quickshell.env("DESKTOP_SESSION")].filter(function(v) { return String(v || "").length > 0 }).join(":")
+  }
+  function fallbackIsHidden(entry) {
+    var id = String((entry && entry.id) || "")
+    if (!id) return true
+    if (id.slice(-8) === ".desktop") id = id.slice(0, -8)
+    return root.fallbackHiddenIds[id] === true
+  }
+  function fallbackEntries(query) {
+    var values = []
+    try { values = DesktopEntries.applications.values || [] } catch (e) { return [] }
+    return AppSearch.sortedEntries(values, query, root.fallbackIsHidden)
+  }
+  function fallbackName(entry) { return AppSearch.entryName(entry) }
+  function fallbackSubtext(entry) { return AppSearch.entrySubtext(entry) }
+  function fallbackIcon(icon) {
+    var value = String(icon || "")
+    if (value.length === 0) return Quickshell.iconPath("application-x-executable", true)
+    if (value.indexOf("file://") === 0 || value.indexOf("image://") === 0) return value
+    if (value.charAt(0) === "/") return Util.fileUrl(value)
+    var themed = Quickshell.iconPath(value, true)
+    if (themed.length > 0) return themed
+    return Quickshell.iconPath("application-x-executable", true)
+  }
+  function fallbackLaunch(appId) {
+    var id = String(appId || "")
+    if (!id) return
+    if (id.slice(-8) === ".desktop") id = id.slice(0, -8)
+    Quickshell.execDetached(["uwsm-app", "--", "gtk-launch", id + ".desktop"])
+  }
+  function fallbackRemove(appId, label) {
+    var id = String(appId || "")
+    if (!id) return
+    if (id.slice(-8) === ".desktop") id = id.slice(0, -8)
+    Quickshell.execDetached([root.fallbackBase() + "/bin/omarchy-remove-launcher-entry", id, String(label || id)])
+  }
+  function loadFallbackHides(rawText) {
+    var next = ({})
+    var lines = String(rawText || "").split("\n")
+    for (var i = 0; i < lines.length; i++) {
+      var id = lines[i].trim()
+      if (id.slice(-8) === ".desktop") id = id.slice(0, -8)
+      if (id.length > 0) next[id] = true
+    }
+    root.fallbackHiddenIds = next
+    if (root.opened && root.providersLoaded["apps"]) root.mergeAppRows()
+  }
+  function refreshFallbackHides() {
+    fallbackHidesScan.running = false
+    fallbackHidesScan.command = ["bash", root.fallbackBase() + "/shell/services/hidden-entries.sh", root.fallbackDesktops()]
+    fallbackHidesScan.running = true
+  }
+
+  FileView {
+    id: fallbackHidesFile
+    path: root.fallbackBase() + "/default/omarchy/launcher.hides"
+    printErrors: false
+    onLoaded: { root.fallbackConfiguredHides = text(); root.loadFallbackHides(text() + "\n" + fallbackHidesOutput.text) }
+    onFileChanged: { root.fallbackConfiguredHides = text(); root.loadFallbackHides(text() + "\n" + fallbackHidesOutput.text) }
+    onLoadFailed: { root.fallbackConfiguredHides = ""; root.loadFallbackHides(fallbackHidesOutput.text) }
+  }
+  QtObject { id: fallbackHidesOutput; property string text: "" }
+  Process {
+    id: fallbackHidesScan
+    stdout: SplitParser { onRead: function(line) { fallbackHidesOutput.text += line + "\n" } }
+    onStarted: fallbackHidesOutput.text = ""
+    onExited: root.loadFallbackHides(root.fallbackConfiguredHides + "\n" + fallbackHidesOutput.text)
+  }
   property bool deleteConfirmOpen: false
   property var deleteTarget: null
   onOpenedChanged: if (!opened) { deleteConfirmOpen = false; deleteTarget = null }
@@ -309,15 +387,14 @@ Item {
   // (DesktopEntries) instead of a bash enumeration, so they carry image
   // icons, launch feedback, and uninstall support like the launcher.
   function mergeAppRows() {
-    if (!root.appLibrary) return
-
-    var rows = root.appLibrary.sortedEntries("")
+    var useLib = !!root.appLibrary
+    var rows = useLib ? root.appLibrary.sortedEntries("") : root.fallbackEntries("")
     var appRows = []
     for (var j = 0; j < rows.length; j++) {
       var entry = rows[j].entry
       var appId = String(entry.id || "")
       if (!appId) continue
-      var subtext = root.appLibrary.entrySubtext(entry)
+      var subtext = useLib ? root.appLibrary.entrySubtext(entry) : root.fallbackSubtext(entry)
       var aliases = subtext ? [subtext] : []
       try {
         if (entry.keywords && typeof entry.keywords.join === "function") aliases = aliases.concat(entry.keywords)
@@ -329,7 +406,7 @@ Item {
         icon: "",
         appIcon: String(entry.icon || ""),
         appId: appId,
-        label: root.appLibrary.entryName(entry),
+        label: useLib ? root.appLibrary.entryName(entry) : root.fallbackName(entry),
         title: "",
         target: "",
         description: subtext,
@@ -760,6 +837,7 @@ Item {
       opened = false
       filterText = ""
       if (root.appLibrary) root.appLibrary.launch(appId, label)
+      else root.fallbackLaunch(appId)
     } else {
       root.applySelected(row.itemId, row.action)
     }
@@ -789,6 +867,7 @@ Item {
     if (!target) return
     root.cancel()
     if (root.appLibrary) root.appLibrary.remove(target.appId, target.label)
+    else root.fallbackRemove(target.appId, target.label)
   }
 
   function applyDmenuSelection(value) {
@@ -934,6 +1013,16 @@ Item {
     target: root.appLibrary
     function onAppsChanged() {
       if (root.providersLoaded["apps"]) root.mergeAppRows()
+    }
+  }
+
+  Connections {
+    target: DesktopEntries.applications
+    function onValuesChanged() {
+      if (root.opened && !root.appLibrary) {
+        root.refreshFallbackHides()
+        if (root.providersLoaded["apps"]) root.mergeAppRows()
+      }
     }
   }
 
@@ -1268,7 +1357,7 @@ Item {
                 // PNG icons upscaled and blurry on HiDPI displays.
                 sourceSize.width: width * Screen.devicePixelRatio
                 sourceSize.height: height * Screen.devicePixelRatio
-                source: row.isApp && root.appLibrary ? root.appLibrary.iconSource(row.appIcon) : ""
+                source: row.isApp ? (root.appLibrary ? root.appLibrary.iconSource(row.appIcon) : root.fallbackIcon(row.appIcon)) : ""
                 asynchronous: true
                 anchors.left: parent.left
                 anchors.leftMargin: root.rowReservedBorderLeft + Style.space(8) + (Style.space(32) - width) / 2
