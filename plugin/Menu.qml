@@ -154,7 +154,10 @@ Item {
     id: fallbackHidesScan
     stdout: SplitParser { onRead: function(line) { fallbackHidesOutput.text += line + "\n" } }
     onStarted: fallbackHidesOutput.text = ""
-    onExited: root.loadFallbackHides(root.fallbackConfiguredHides + "\n" + fallbackHidesOutput.text)
+    onExited: function(exitCode) {
+      if (exitCode !== 0) return
+      root.loadFallbackHides(root.fallbackConfiguredHides + "\n" + fallbackHidesOutput.text)
+    }
   }
   property bool deleteConfirmOpen: false
   property var deleteTarget: null
@@ -1024,6 +1027,10 @@ Item {
         if (root.providersLoaded["apps"]) root.mergeAppRows()
       }
     }
+  }
+
+  onAppLibraryChanged: {
+    if (root.providersLoaded["apps"]) root.mergeAppRows()
   }
 
   // The JSONC sources are watched so live edits to the default file (or the
